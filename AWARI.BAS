@@ -99,16 +99,14 @@
 1230 PRINT "PIT on your own SIDE. Starting from the PIT to the right of this"
 1240 PRINT "one, these beans are SOWN one in each PIT working around the board"
 1250 PRINT "anti-clockwise.":PRINT
-1260 PRINT 
-     "   A TURN consists of one or two MOVEs. If the last bean of your MOVE"
+1260 PRINT "   A TURN consists of one or two MOVEs. If the last bean of your MOVE"
 1270 PRINT "is SOWN in your own HOME you may take a second MOVE.":PRINT
 1275 LINE INPUT "Enter 'RETURN' to continue.";RR$:GOSUB 1010
 1280 PRINT "   If the last bean SOWN in a MOVE lands in an empty PIT, provided"
 1290 PRINT "that the opposite PIT is not empty, all the beans in the opposite"
 1300 PRINT "PIT, together with the last bean SOWN are 'captured' and moved to"
 1310 PRINT "the player's HOME.":PRINT
-1320 PRINT 
-     "   When either side is empty, the game is finished. The player with"
+1320 PRINT "   When either side is empty, the game is finished. The player with"
 1330 PRINT "the most beans in his HOME has won.":PRINT
 1340 LINE INPUT "Enter 'RETURN' to continue.";RR$:PRINT CHR$(26)
 1350 PRINT "   In the computer version, the board is printed as 14 numbers"
