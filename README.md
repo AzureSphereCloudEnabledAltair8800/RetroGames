@@ -21,7 +21,7 @@ copyx love.bas
 
 ## Games
 
-This list of games was made possible by the dedicated work of [Vintage](http://www.vintage-basic.net/games.html) and [CP/M Games](http://www.retroarchive.org/cpm/games/games.htm).
+This list of games was made possible by the dedicated work of [Vintage BASIC](http://www.vintage-basic.net/games.html) and [CP/M Games](http://www.retroarchive.org/cpm/games/games.htm).
 
 <table border="0" cellpadding="3px" cellspacing="0">
       <thead>
