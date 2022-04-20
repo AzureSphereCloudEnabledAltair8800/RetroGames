@@ -26,8 +26,7 @@
 200 PRINT "Is it a ";RIGHT$(A$(K),LEN(A$(K))-2);
 210 INPUT A$
 220 A$=LEFT$(A$,1)
-230 IF LEFT$(A$,1)="Y" OR LEFT$(A$,1)="y" THEN PRINT:
-    PRINT "Why not try another animal?": GOTO 120
+230 IF LEFT$(A$,1)="Y" OR LEFT$(A$,1)="y" THEN PRINT:PRINT "Why not try another animal?": GOTO 120
 240 PRINT:INPUT "The animal you were thinking of was a ";V$
 250 PRINT:PRINT "Please type in a question that would distinguish a"
 260 PRINT V$;" from a ";RIGHT$(A$(K),LEN(A$(K))-2);" :":PRINT
