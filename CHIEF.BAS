@@ -49,8 +49,7 @@
 440 PRINT TAB(10) "*"
 450 PRINT:PRINT"#########################":PRINT
 470 PRINT "I HOPE YOU BELIEVE ME NOW, FOR YOUR SAKE!!"
-500 PRINT:INPUT "AGAIN";R$:
-    IF LEFT$(R$,1)="Y" OR LEFT$(R$,1)="y" THEN 60 ELSE 510
+500 PRINT:INPUT "AGAIN";R$:IF LEFT$(R$,1)="Y" OR LEFT$(R$,1)="y" THEN 60 ELSE 510
 510 PRINT:PRINT "BYE!!!":PRINT:PRINT:PRINT
 520 RUN "MENU"
 
