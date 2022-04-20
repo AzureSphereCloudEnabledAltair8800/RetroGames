@@ -1,9 +1,13 @@
-10 PRINT TAB(32);"ANIMAL"
+5 WIDTH 80:CLEAR 2000
+6 PRINT CHR$(26)
+10 PRINT TAB(33);"ANIMAL"
+15 PRINT:PRINT
 20 PRINT TAB(15);"CREATIVE COMPUTING  MORRISTOWN, NEW JERSEY"
 30 PRINT: PRINT: PRINT
 40 PRINT "PLAY 'GUESS THE ANIMAL'"
 45 PRINT
-50 PRINT "THINK OF AN ANIMAL AND THE COMPUTER WILL TRY TO GUESS IT."
+50 PRINT "Think of an animal and the computer will try to guess it."
+55 PRINT "Type the word 'List' to see what animals the computer knows.":PRINT
 60 PRINT
 70 DIM A$(200)
 80 FOR I=0 TO 3
@@ -11,24 +15,28 @@
 100 NEXT I
 110 N=VAL(A$(0))
 120 REM          MAIN CONTROL SECTION
-130 INPUT "ARE YOU THINKING OF AN ANIMAL";A$
-140 IF A$="LIST" THEN 600
-150 IF LEFT$(A$,1)<>"Y" THEN 120
+130 PRINT:INPUT "Are you thinking of an animal";A$
+135 IF LEFT$(A$,1)="N" OR LEFT$(A$,1)="n" THEN PRINT:PRINT:RUN "MENU"
+140 IF A$="LIST" OR A$="List" OR A$="list" THEN 600
+150 IF LEFT$(A$,1)<>"Y" AND LEFT$(A$,1)<>"y" THEN 120
 160 K=1
 170 GOSUB 390
 180 IF LEN(A$(K))=0 THEN 999
 190 IF LEFT$(A$(K),2)="\Q" THEN 170
-200 PRINT "IS IT A ";RIGHT$(A$(K),LEN(A$(K))-2);
+200 PRINT "Is it a ";RIGHT$(A$(K),LEN(A$(K))-2);
 210 INPUT A$
 220 A$=LEFT$(A$,1)
-230 IF LEFT$(A$,1)="Y" THEN PRINT "WHY NOT TRY ANOTHER ANIMAL?": GOTO 120
-240 INPUT "THE ANIMAL YOU WERE THINKING OF WAS A ";V$
-250 PRINT "PLEASE TYPE IN A QUESTION THAT WOULD DISTINGUISH A"
-260 PRINT V$;" FROM A ";RIGHT$(A$(K),LEN(A$(K))-2)
+230 IF LEFT$(A$,1)="Y" OR LEFT$(A$,1)="y" THEN PRINT:
+    PRINT "Why not try another animal?": GOTO 120
+240 PRINT:INPUT "The animal you were thinking of was a ";V$
+250 PRINT:PRINT "Please type in a question that would distinguish a"
+260 PRINT V$;" from a ";RIGHT$(A$(K),LEN(A$(K))-2);" :":PRINT
 270 INPUT X$
-280 PRINT "FOR A ";V$;" THE ANSWER WOULD BE ";
+280 PRINT "For a ";V$;" the answer would be ";
 290 INPUT A$
-300 A$=LEFT$(A$,1): IF A$<>"Y" AND A$<>"N" THEN 280
+300 A$=LEFT$(A$,1): IF A$<>"Y" AND A$<>"y" AND A$<>"N" AND A$<>"n" THEN 280
+302 IF A$="y" THEN A$="Y"
+304 IF A$="n" THEN A$="N"
 310 IF A$="Y" THEN B$="N"
 320 IF A$="N" THEN B$="Y"
 330 Z1=VAL(A$(0))
@@ -43,7 +51,9 @@
 415 IF MID$(Q$,Z,1)<>"\" THEN PRINT MID$(Q$,Z,1);: NEXT Z
 420 INPUT C$
 430 C$=LEFT$(C$,1)
-440 IF C$<>"Y" AND C$<>"N" THEN 410
+432 IF C$="y" THEN C$="Y"
+434 IF C$="n" THEN C$="N"
+440 IF C$<>"Y" AND C$<>"y" AND C$<>"N" AND C$<>"n" THEN 410
 450 T$="\"+C$
 455 FOR X=3 TO LEN(Q$)-1
 460 IF MID$(Q$,X,2)=T$ THEN 480
@@ -55,8 +65,8 @@
 505 STOP
 510 K=VAL(MID$(Q$,X+2,Y-X-2))
 520 RETURN
-530 DATA "4","\QDOES IT SWIM\Y2\N3\","\AFISH","\ABIRD"
-600 PRINT:PRINT "ANIMALS I ALREADY KNOW ARE:"
+530 DATA "4","\QDoes it swim\Y2\N3\","\Afish","\Abird"
+600 PRINT:PRINT "Animals I already know are:"
 605 X=0
 610 FOR I=1 TO 200
 620 IF LEFT$(A$(I),2)<>"\A" THEN 650
@@ -68,4 +78,5 @@
 660 PRINT
 670 PRINT
 680 GOTO 120
-999 END
+999 RUN "MENU"
+
