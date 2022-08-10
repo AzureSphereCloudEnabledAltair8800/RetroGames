@@ -49,11 +49,11 @@ char **argv;
             printf("\tNext, type the filename 'riddle.c'\n");
             printf("\tPress enter to start the transfer\n\n");
             printf("3. Compile riddle.c: cc riddle\n");
-            printf("4. Fix the code with Word Master. ");
-            printf("Hint see https://nice-bay-0f7498d0f.1.azurestaticapps.net/Programming-the-Altair/C-programming#editing-hwc-with-word-master\n");
-            printf("4. Link riddle: clink riddle\n");
-            printf("5. Run riddle from the command line\n");
-            printf("6. Good luck :)");
+            printf("4. Fix the code with Word Master.\n");
+            printf("   Hint see https://nice-bay-0f7498d0f.1.azurestaticapps.net/Programming-the-Altair/C-programming#editing-hwc-with-word-master\n");
+            printf("5. Link riddle: clink riddle\n");
+            printf("6. Run riddle from the command line\n");
+            printf("7. Good luck :)");
             break;
         }
 
