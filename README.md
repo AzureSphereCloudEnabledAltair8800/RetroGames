@@ -1,4 +1,4 @@
-# Retro Games for CPM and Microsoft Basic
+# Altair 8800 Retro Games for CPM and Microsoft Basic
 
 ## How to copy to the CP/M filesystem
 
