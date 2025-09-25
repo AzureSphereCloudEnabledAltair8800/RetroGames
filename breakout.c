@@ -30,7 +30,7 @@ int outp();
 #define MIN_ROW 6
 #define MAX_ROW 30
 #define MIN_COL 5
-#define MAX_COL 45
+#define MAX_COL 50
 
 /* Globals for key sequence debugging */
 int g_last_seq[4];
@@ -55,7 +55,11 @@ int base_speed;       /* Base speed cycles (4 = 100ms) */
 
 /* Timing counters for cooperative multitasking */
 int ball_counter;   /* Counter for ball movement timing */
-int game_cycles;
+int paddle_counter; /* Counter for paddle input timing */
+int status_counter; /* Counter for status display timing */
+
+/* Collision handling */
+int paddle_needs_redraw; /* Flag to force paddle redraw after collision */
 
 /* --- Console I/O --- */
 
@@ -109,6 +113,8 @@ int clear_screen()
 {
     chput(KEY_ESC);
     cputs("[2J");
+    chput(KEY_ESC);
+    cputs("[0m");
     cursor_move(1, 1);
     return 0;
 }
@@ -159,7 +165,7 @@ int draw_walls()
 int draw_instructions()
 {
     cursor_move(1, 1);
-    cputs("VT100/xterm.js Ball and Paddle Game\r\n");
+    cputs("VT100/xterm.js Ball and Paddle Game (Enable Character Mode (Ctrl+L))\r\n");
     cputs("LEFT/RIGHT keys move ---- (paddle). Keep the ball from going out!\r\n");
     cputs("Press Q to quit.\r\n");
     cputs("----------------------------------------------------------------\r\n");
@@ -189,17 +195,7 @@ int row;
 int col;
 {
     cursor_move(row, col);
-    chput('-');
-    cursor_move(row, col + 1);
-    chput('-');
-    cursor_move(row, col + 2);
-    chput('-');
-    cursor_move(row, col + 3);
-    chput('-');
-    cursor_move(row, col + 4);
-    chput('-');
-    cursor_move(row, col + 5);
-    chput('-');
+    cputs("------");  /* Draw entire paddle in one operation */
     return 0;
 }
 
@@ -208,17 +204,7 @@ int row;
 int col;
 {
     cursor_move(row, col);
-    chput(' ');
-    cursor_move(row, col + 1);
-    chput(' ');
-    cursor_move(row, col + 2);
-    chput(' ');
-    cursor_move(row, col + 3);
-    chput(' ');
-    cursor_move(row, col + 4);
-    chput(' ');
-    cursor_move(row, col + 5);
-    chput(' ');
+    cputs("      ");  /* Erase entire paddle in one operation */
     return 0;
 }
 
@@ -245,12 +231,16 @@ int update_status()
     putnum(score);
     cputs("   Bounces: ");
     putnum(bounce_count);
-    cputs("   Random: ");
-    putnum(last_random);
     cputs("   Ball: ");
     putnum(x_row);
     cputs(",");
     putnum(x_col);
+    cputs("   Paddle: ");
+    putnum(y_row);
+    cputs(",");
+    putnum(y_col);
+    cputs("-");
+    putnum(y_col + 5);
     cputs("                    ");
     return 0;
 }
@@ -261,6 +251,18 @@ int check_paddle_hit()
 {
     /* Check if ball is at paddle row and within paddle range */
     if (x_row == y_row && x_col >= y_col && x_col <= y_col + 5) {
+        return 1;
+    }
+    return 0;
+}
+
+int check_future_paddle_hit()
+{
+    int future_x_col;
+    
+    /* Check if ball would hit paddle at next position */
+    future_x_col = x_col + ball_dx;  /* Future horizontal position */
+    if (future_x_col >= y_col && future_x_col <= y_col + 5) {
         return 1;
     }
     return 0;
@@ -288,11 +290,11 @@ int should_move_ball()
     effective_bounces = bounce_count;
     if (effective_bounces > 10) effective_bounces = 10;
     
-    /* Calculate current speed: base speed reduced by 2% per bounce */
-    /* Speed increases as cycles decrease - minimum 2 cycles (50ms) at 10 bounces */
-    speed_cycles = base_speed - (effective_bounces / 5);  /* Roughly 2% per bounce */
-    if (speed_cycles < 2) speed_cycles = 2;  /* Minimum speed limit at 10 bounces */
+    /* Calculate current speed: base speed reduced by bounce count */
+    speed_cycles = base_speed - (effective_bounces / 5);
+    if (speed_cycles < 2) speed_cycles = 2;  /* Minimum speed: 2 cycles (50ms) */
     
+    /* Ensure we're using the correct speed calculation */
     return (ball_counter >= speed_cycles);
 }
 
@@ -358,35 +360,37 @@ int get_random()
 
 int update_ball_position()
 {
-    /* Update ball position */
-    x_row += ball_dy;
-    x_col += ball_dx;
+    /* Update ball position first - move exactly 1 step in each direction */
+    x_row += ball_dy;  /* ball_dy is -1, 0, or 1 */
+    x_col += ball_dx;  /* ball_dx is -1, 0, or 1 */
+    
+    /* Check for paddle collision AFTER moving - when ball is at paddle position */
+    if (x_row == y_row && x_col >= y_col && x_col <= y_col + 5 && ball_dy > 0) {
+        ball_dy = -1;  /* Always bounce up from paddle */
+        x_row -= 1;   /* Immediately move ball up one row to clear paddle */
+        score++;
+        bounce_count++;  /* Only count paddle hits for speed increase */
+        paddle_needs_redraw = 1;  /* Force paddle redraw to fix blank space */
+        return 0;
+    }
     
     /* Ball bounces off top */
     if (x_row <= MIN_ROW) {
         x_row = MIN_ROW;
         ball_dy = 1;
-        bounce_count++;  /* Increase speed for next movement */
+        /* No bounce count increase for wall bounces */
     }
 
     /* Ball bounces off sides */
     if (x_col <= MIN_COL) {
         x_col = MIN_COL;
         ball_dx = 1;
-        bounce_count++;  /* Increase speed for next movement */
+        /* No bounce count increase for wall bounces */
     }
     if (x_col >= MAX_COL) {
         x_col = MAX_COL;
         ball_dx = -1;
-        bounce_count++;  /* Increase speed for next movement */
-    }
-
-    /* Check paddle hit */
-    if (x_row >= y_row && check_paddle_hit()) {
-        ball_dy = -1;
-        x_row = y_row - 1;  /* Position ball just above paddle */
-        score++;
-        bounce_count++;  /* Increase speed for next movement */
+        /* No bounce count increase for wall bounces */
     }
 
     /* Ball goes out at bottom */
@@ -401,7 +405,10 @@ int update_ball_position()
         ball_dx = (last_random & 1) ? -1 : 1;  /* Random horizontal direction */
         ball_dy = 1;  /* Always start going down */
         bounce_count = 0;  /* Reset speed to default for new ball */
+        ball_counter = 0;  /* Reset ball timing counter for fresh start */
+        base_speed = 4;    /* Ensure base speed is reset to default (4 cycles = 100ms) */
         if (score > 0) score--;  /* Lose a point */
+        return 1;  /* Signal that ball was reset - force immediate counter reset */
     }
     return 0;
 }
@@ -413,7 +420,7 @@ int handle_paddle_input()
     
     paddle_moved = 0;
     
-    /* Check for user input (non-blocking) - check multiple times for responsiveness */
+    /* Check for user input (non-blocking) */
     if (check_key_ready()) {
         ch = bdos(6, 0xFF) & 0xFF;
         g_last_key_code = ch;
@@ -422,21 +429,6 @@ int handle_paddle_input()
             return -1;  /* Signal to quit game */
         }
         else if (ch == 19) { /* Move paddle left - cursor left key */
-            if (y_col > MIN_COL + 3) y_col -= 4;  /* Move 4 spaces */
-            else if (y_col > MIN_COL) y_col--;    /* Move 1 space if near edge */
-            paddle_moved = 1;
-        }
-        else if (ch == 4) { /* Move paddle right - cursor right key */
-            if (y_col < MAX_COL - 9) y_col += 4;  /* Move 4 spaces */
-            else if (y_col < MAX_COL - 5) y_col++; /* Move 1 space if near edge */
-            paddle_moved = 1;
-        }
-    }
-    
-    /* Check for additional input immediately for faster response */
-    if (check_key_ready()) {
-        ch = bdos(6, 0xFF) & 0xFF;
-        if (ch == 19) { /* Move paddle left - cursor left key */
             if (y_col > MIN_COL + 3) y_col -= 4;  /* Move 4 spaces */
             else if (y_col > MIN_COL) y_col--;    /* Move 1 space if near edge */
             paddle_moved = 1;
@@ -535,7 +527,9 @@ int main()
     
     /* Initialize game loop timer and counters */
     ball_counter = 0;
-    game_cycles = 0;
+    paddle_counter = 0;
+    status_counter = 0;
+    paddle_needs_redraw = 0;  /* Initialize collision redraw flag */
     start_game_loop_timer();
 
     hide_cursor();
@@ -555,25 +549,30 @@ int main()
         old_y_row = y_row;
         old_y_col = y_col;
 
-        /* Handle paddle input and check for quit */
-        ch = handle_paddle_input();
-        if (ch == -1) {
-            running = 0;  /* Quit game */
-        }
-
         /* Check if game loop timer has expired - cooperative multitasking */
         if (is_game_loop_timer_expired()) {
-            game_cycles++;
             ball_counter++;
-            /* Hardware RNG used - no seed updates needed */
-            
-            /* Move ball every 4 cycles (4 * 25ms = 100ms) */
-            if (should_move_ball()) {
-                update_ball_position();
-                ball_counter = 0;  /* Reset ball counter */
+            paddle_counter++;
+            status_counter++;
+
+            /* Handle paddle input every 2 cycles (2 * 25ms = 50ms) */
+            if (paddle_counter >= 2) {
+                ch = handle_paddle_input();
+                if (ch == -1) {
+                    running = 0;  /* Quit game */
+                }
+                paddle_counter = 0;  /* Reset paddle counter */
             }
             
-            start_game_loop_timer();  /* Restart 50ms timer */
+            /* Hardware RNG used - no seed updates needed */
+            
+            /* Move ball when counter reaches the required cycles */
+            if (should_move_ball()) {
+                update_ball_position();
+                ball_counter = 0;  /* Reset ball counter after movement */
+            }
+            
+            start_game_loop_timer();  /* Restart 25ms timer */
         }
 
         /* Only redraw objects that moved */
@@ -581,18 +580,23 @@ int main()
             erase_x_marker(old_x_row, old_x_col);
             draw_x_marker(x_row, x_col);
         }
-        if (y_row != old_y_row || y_col != old_y_col) {
+        if (y_row != old_y_row || y_col != old_y_col || paddle_needs_redraw) {
             erase_y_marker(old_y_row, old_y_col);
             draw_y_marker(y_row, y_col);
+            paddle_needs_redraw = 0;      /* Reset flag after redraw */
         }
 
-        update_status();
+        /* Update status every 40 cycles (40 * 25ms = 1000ms) */
+        if (status_counter >= 40) {
+            update_status();
+            status_counter = 0;  /* Reset status counter */
+        }
         /* No delay loop needed - timing controlled by cooperative multitasking */
     }
 
+    clear_screen();
     show_cursor();
-    cursor_move(23, 1);
-    cputs("\r\nFinal Score: ");
+    cputs("Final Score: ");
     putnum(score);
     cputs("\r\nGoodbye!\r\n");
     return 0;
